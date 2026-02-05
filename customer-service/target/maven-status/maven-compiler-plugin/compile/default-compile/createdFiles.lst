@@ -1,0 +1,12 @@
+com\dbs\customer\application\mapper\CustomerMapperImpl.class
+com\dbs\customer\api\controller\CustomerController.class
+com\dbs\customer\application\service\CustomerService.class
+com\dbs\customer\application\service\impl\CustomerManager.class
+com\dbs\customer\domain\model\CustomerStatus.class
+com\dbs\customer\CustomerServiceApplication.class
+com\dbs\customer\domain\model\Customer.class
+com\dbs\customer\domain\repository\CustomerRepository.class
+com\dbs\customer\application\mapper\CustomerMapper.class
+com\dbs\customer\domain\model\Customer$CustomerBuilder.class
+com\dbs\customer\application\dto\CustomerCreateRequest.class
+com\dbs\customer\application\dto\CustomerResponse.class
