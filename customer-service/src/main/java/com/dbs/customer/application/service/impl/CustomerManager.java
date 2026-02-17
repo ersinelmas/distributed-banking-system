@@ -3,6 +3,8 @@ package com.dbs.customer.application.service.impl;
 import com.dbs.customer.application.service.CustomerService;
 import com.dbs.customer.domain.model.Customer;
 import com.dbs.customer.domain.repository.CustomerRepository;
+import com.dbs.customer.infrastructure.exception.AlreadyExistsException;
+import com.dbs.customer.infrastructure.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +20,10 @@ public class CustomerManager implements CustomerService {
     @Transactional
     public Customer createCustomer(Customer customer) {
         if (customerRepository.existsByEmail(customer.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new AlreadyExistsException("Customer with this email already exists");
         }
         if (customerRepository.existsByTaxNumber(customer.getTaxNumber())) {
-            throw new RuntimeException("Tax number already exists");
+            throw new AlreadyExistsException("Customer with this tax number already exists");
         }
         return customerRepository.save(customer);
     }
@@ -30,7 +32,7 @@ public class CustomerManager implements CustomerService {
     @Transactional(readOnly = true)
     public Customer getCustomerByNumber(String customerNumber) {
         return customerRepository.findByCustomerNumber(customerNumber)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with number: " + customerNumber));
     }
 
     @Override

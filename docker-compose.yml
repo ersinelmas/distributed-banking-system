@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dbs-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=dbs_user
+      - POSTGRES_PASSWORD=dbs_password
+      - POSTGRES_DB=dbs_customer_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dbs-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbs_user -d dbs_customer_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  dbs-network:
+    driver: bridge
