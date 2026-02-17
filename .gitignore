@@ -1,0 +1,17 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+/static/
+/templates/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Windows ###
+Thumbs.db
+desktop.ini
+
+### macOS ###
+.DS_Store
