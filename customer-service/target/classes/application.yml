@@ -1,6 +1,13 @@
 spring:
   application:
     name: customer-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
 
   datasource:
     url: jdbc:postgresql://localhost:5432/dbs_customer_db
@@ -21,3 +28,8 @@ server:
   port: 8081
   error:
     include-message: always
+
+dbs:
+  kafka:
+    topics:
+      customer-created: dbs.customer.created.v1
