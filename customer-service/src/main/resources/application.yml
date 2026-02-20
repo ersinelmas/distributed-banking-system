@@ -6,6 +6,7 @@ server:
 spring:
   application:
     name: customer-service
+
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -28,6 +29,16 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      cache-null-values: false
 
 dbs:
   kafka:

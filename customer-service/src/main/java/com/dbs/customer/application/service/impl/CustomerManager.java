@@ -8,6 +8,8 @@ import com.dbs.customer.infrastructure.exception.AlreadyExistsException;
 import com.dbs.customer.infrastructure.exception.ResourceNotFoundException;
 import com.dbs.customer.infrastructure.kafka.producer.CustomerEventProducer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class CustomerManager implements CustomerService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"customers", "customerList"}, allEntries = true)
     public Customer createCustomer(Customer customer) {
         if (customerRepository.existsByEmail(customer.getEmail())) {
             throw new AlreadyExistsException("Customer with this email already exists");
@@ -46,6 +49,7 @@ public class CustomerManager implements CustomerService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "customers", key = "#customerNumber")
     public Customer getCustomerByNumber(String customerNumber) {
         return customerRepository.findByCustomerNumber(customerNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with number: " + customerNumber));
@@ -53,6 +57,7 @@ public class CustomerManager implements CustomerService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "customerList")
     public List<Customer> getAllCustomers() {
         return customerRepository.findAll();
     }

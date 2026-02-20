@@ -53,6 +53,14 @@ services:
     networks:
       - dbs-network
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: dbs-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - dbs-network
+
 volumes:
   postgres_data:
 
