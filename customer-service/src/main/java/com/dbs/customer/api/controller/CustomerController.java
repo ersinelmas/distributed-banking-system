@@ -38,4 +38,9 @@ public class CustomerController {
         var customers = customerService.getAllCustomers();
         return customerMapper.toResponseList(customers);
     }
+
+    @GetMapping("/search")
+    public List<CustomerResponse> searchCustomers(@RequestParam String query) {
+        return customerService.searchCustomers(query);
+    }
 }

@@ -1,5 +1,6 @@
 package com.dbs.customer.application.service.impl;
 
+import com.dbs.customer.application.dto.CustomerResponse;
 import com.dbs.customer.application.service.CustomerService;
 import com.dbs.customer.domain.event.CustomerCreatedEvent;
 import com.dbs.customer.domain.model.Customer;
@@ -21,6 +22,7 @@ public class CustomerManager implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerEventProducer customerEventProducer;
+    private final com.dbs.customer.domain.repository.elastic.CustomerElasticRepository elasticRepository;
 
     @Override
     @Transactional
@@ -60,5 +62,20 @@ public class CustomerManager implements CustomerService {
     @Cacheable(value = "customerList")
     public List<Customer> getAllCustomers() {
         return customerRepository.findAll();
+    }
+
+    @Override
+    public List<CustomerResponse> searchCustomers(String query) {
+        var elasticResults = elasticRepository.findByFirstNameContainingOrLastNameContaining(query, query);
+
+        return elasticResults.stream()
+                .map(index -> new CustomerResponse(
+                        index.getCustomerNumber(),
+                        index.getFirstName(),
+                        index.getLastName(),
+                        index.getEmail(),
+                        "ACTIVE",
+                        null
+                )).toList();
     }
 }

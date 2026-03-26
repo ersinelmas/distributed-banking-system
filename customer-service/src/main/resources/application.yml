@@ -15,6 +15,20 @@ spring:
       properties:
         spring.json.add.type.headers: false
 
+    consumer:
+      group-id: search-group
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: com.dbs.customer.domain.event.CustomerCreatedEvent
+        spring.json.trusted.packages: "com.dbs.*"
+
+  elasticsearch:
+    uris: http://localhost:9200
+
   datasource:
     url: jdbc:postgresql://localhost:5432/dbs_customer_db
     username: dbs_user
