@@ -4,6 +4,7 @@ import com.dbs.customer.application.dto.CustomerCreateRequest;
 import com.dbs.customer.application.dto.CustomerResponse;
 import com.dbs.customer.application.mapper.CustomerMapper;
 import com.dbs.customer.application.service.CustomerService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ public class CustomerController {
     }
 
     @GetMapping
+    @RateLimiter(name = "customerApiLimit", fallbackMethod = "getAllCustomersFallback")
     public List<CustomerResponse> getAllCustomers() {
         var customers = customerService.getAllCustomers();
         return customerMapper.toResponseList(customers);
@@ -42,5 +44,13 @@ public class CustomerController {
     @GetMapping("/search")
     public List<CustomerResponse> searchCustomers(@RequestParam String query) {
         return customerService.searchCustomers(query);
+    }
+
+    public List<CustomerResponse> getAllCustomersFallback(Throwable t) {
+        throw new com.dbs.customer.infrastructure.exception.BusinessException(
+                "Too many requests! Please wait for the next 10-second window.",
+                "TOO_MANY_REQUESTS",
+                HttpStatus.TOO_MANY_REQUESTS
+        );
     }
 }

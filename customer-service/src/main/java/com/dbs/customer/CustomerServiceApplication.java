@@ -12,7 +12,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication
 @EnableJpaRepositories(
         basePackages = "com.dbs.customer.domain.repository",
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASPECTJ, pattern = "com.dbs.customer.domain.repository.elastic.*")
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASPECTJ,
+                pattern = "com.dbs.customer.domain.repository.elastic.*"
+        )
 )
 @EnableElasticsearchRepositories(
         basePackages = "com.dbs.customer.domain.repository.elastic"

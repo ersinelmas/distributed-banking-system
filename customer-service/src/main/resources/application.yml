@@ -7,6 +7,32 @@ spring:
   application:
     name: customer-service
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dbs_customer_db
+    username: dbs_user
+    password: dbs_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      cache-null-values: false
+
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 30s
+
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -14,7 +40,6 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
-
     consumer:
       group-id: search-group
       auto-offset-reset: earliest
@@ -26,33 +51,24 @@ spring:
         spring.json.value.default.type: com.dbs.customer.domain.event.CustomerCreatedEvent
         spring.json.trusted.packages: "com.dbs.*"
 
-  elasticsearch:
-    uris: http://localhost:9200
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/dbs_customer_db
-    username: dbs_user
-    password: dbs_password
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  cache:
-    type: redis
-    redis:
-      time-to-live: 3600000
-      cache-null-values: false
+resilience4j:
+  circuitbreaker:
+    instances:
+      customerSearchCB:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+  ratelimiter:
+    instances:
+      customerApiLimit:
+        limitForPeriod: 5
+        limitRefreshPeriod: 10s
+        timeoutDuration: 0
+        registerHealthIndicator: true
 
 dbs:
   kafka:
