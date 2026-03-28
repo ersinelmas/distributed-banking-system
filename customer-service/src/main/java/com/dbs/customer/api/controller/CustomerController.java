@@ -6,12 +6,16 @@ import com.dbs.customer.application.mapper.CustomerMapper;
 import com.dbs.customer.application.service.CustomerService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
@@ -42,7 +46,9 @@ public class CustomerController {
     }
 
     @GetMapping("/search")
-    public List<CustomerResponse> searchCustomers(@RequestParam String query) {
+    public List<CustomerResponse> searchCustomers(
+            @RequestParam @NotBlank(message = "Search query cannot be empty")
+            @Size(min = 2, message = "Search query must be at least 2 characters") String query) {
         return customerService.searchCustomers(query);
     }
 

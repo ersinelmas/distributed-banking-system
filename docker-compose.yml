@@ -8,56 +8,42 @@ services:
       - POSTGRES_USER=dbs_user
       - POSTGRES_PASSWORD=dbs_password
       - POSTGRES_DB=dbs_customer_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - dbs-network
-    restart: unless-stopped
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: dbs-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbs_user -d dbs_customer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - dbs-network
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: dbs-kafka
-    depends_on:
-      - zookeeper
     ports:
       - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
     networks:
       - dbs-network
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: dbs-kafka-ui
-    depends_on:
-      - kafka
-    ports:
-      - "8090:8080"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: dbs-zookeeper
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      ZOOKEEPER_CLIENT_PORT: 2181
     networks:
       - dbs-network
 
   redis:
     image: redis:7.2-alpine
     container_name: dbs-redis
-    ports:
-      - "6379:6379"
     networks:
       - dbs-network
 
@@ -70,24 +56,53 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - dbs-network
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.4
-    container_name: dbs-kibana
-    depends_on:
-      - elasticsearch
+  customer-service:
+    build:
+      context: .
+      dockerfile: customer-service/Dockerfile
+    container_name: dbs-customer-service
     ports:
-      - "5601:5601"
+      - "8081:8081"
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/dbs_customer_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - dbs-network
 
-volumes:
-  postgres_data:
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    container_name: dbs-notification-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      - kafka
+    networks:
+      - dbs-network
 
 networks:
   dbs-network:
     driver: bridge
+
+volumes:
+  postgres_data:
