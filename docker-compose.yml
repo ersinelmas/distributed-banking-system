@@ -64,6 +64,28 @@ services:
     networks:
       - dbs-network
 
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: dbs-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - dbs-network
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: dbs-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - dbs-network
+
   customer-service:
     build:
       context: .

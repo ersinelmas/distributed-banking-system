@@ -21,3 +21,12 @@ dbs:
   kafka:
     topics:
       customer-created: dbs.customer.created.v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
