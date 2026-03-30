@@ -122,6 +122,24 @@ services:
     networks:
       - dbs-network
 
+  account-service:
+    build:
+      context: .
+      dockerfile: account-service/Dockerfile
+    container_name: dbs-account-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/dbs_customer_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - dbs-network
+
 networks:
   dbs-network:
     driver: bridge
