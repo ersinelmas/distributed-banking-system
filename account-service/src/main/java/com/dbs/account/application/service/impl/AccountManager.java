@@ -1,5 +1,6 @@
 package com.dbs.account.application.service.impl;
 
+import com.dbs.account.application.dto.MoneyTransferRequest;
 import com.dbs.account.application.service.AccountService;
 import com.dbs.account.domain.model.Account;
 import com.dbs.account.domain.model.Currency;
@@ -64,5 +65,44 @@ public class AccountManager implements AccountService {
 
         account.setBalance(account.getBalance().add(amount));
         return accountRepository.save(account);
+    }
+
+    @Override
+    @Transactional
+    public void transferMoney(MoneyTransferRequest request) {
+        if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Transfer amount must be positive");
+        }
+
+        if (request.fromIban().equals(request.toIban())) {
+            throw new RuntimeException("Sender and receiver accounts cannot be the same");
+        }
+
+        String firstLock = request.fromIban().compareTo(request.toIban()) < 0 ? request.fromIban() : request.toIban();
+        String secondLock = firstLock.equals(request.fromIban()) ? request.toIban() : request.fromIban();
+
+        log.info("Locking in order: {} then {}", firstLock, secondLock);
+
+        accountRepository.findByIbanWithLock(firstLock)
+                .orElseThrow(() -> new RuntimeException("Account not found: " + firstLock));
+        accountRepository.findByIbanWithLock(secondLock)
+                .orElseThrow(() -> new RuntimeException("Account not found: " + secondLock));
+
+        Account fromAccount = accountRepository.findByIban(request.fromIban())
+                .orElseThrow(() -> new RuntimeException("Sender account not found"));
+        Account toAccount = accountRepository.findByIban(request.toIban())
+                .orElseThrow(() -> new RuntimeException("Receiver account not found"));
+
+        if (fromAccount.getBalance().compareTo(request.amount()) < 0) {
+            throw new RuntimeException("Insufficient balance");
+        }
+
+        fromAccount.setBalance(fromAccount.getBalance().subtract(request.amount()));
+        toAccount.setBalance(toAccount.getBalance().add(request.amount()));
+
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+
+        log.info("Transfer of {} completed from {} to {}", request.amount(), request.fromIban(), request.toIban());
     }
 }

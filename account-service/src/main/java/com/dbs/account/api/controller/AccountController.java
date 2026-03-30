@@ -1,8 +1,10 @@
 package com.dbs.account.api.controller;
 
 import com.dbs.account.application.dto.AccountResponse;
+import com.dbs.account.application.dto.MoneyTransferRequest;
 import com.dbs.account.application.mapper.AccountMapper;
 import com.dbs.account.application.service.AccountService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,5 +29,10 @@ public class AccountController {
     public AccountResponse deposit(@PathVariable String iban, @RequestParam BigDecimal amount) {
         var account = accountService.depositMoney(iban, amount);
         return accountMapper.toResponse(account);
+    }
+
+    @PostMapping("/transfer")
+    public void transfer(@Valid @RequestBody MoneyTransferRequest request) {
+        accountService.transferMoney(request);
     }
 }
