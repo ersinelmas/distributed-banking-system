@@ -2,15 +2,18 @@ package com.dbs.account.application.service.impl;
 
 import com.dbs.account.application.dto.MoneyTransferRequest;
 import com.dbs.account.application.service.AccountService;
+import com.dbs.account.domain.event.MoneyTransferredEvent;
 import com.dbs.account.domain.model.Account;
 import com.dbs.account.domain.model.Currency;
 import com.dbs.account.domain.repository.AccountRepository;
+import com.dbs.account.infrastructure.kafka.producer.TransactionEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 
@@ -20,6 +23,7 @@ import java.util.Random;
 public class AccountManager implements AccountService {
 
     private final AccountRepository accountRepository;
+    private final TransactionEventProducer transactionEventProducer;
 
     @Override
     @Transactional
@@ -64,6 +68,12 @@ public class AccountManager implements AccountService {
                 .orElseThrow(() -> new RuntimeException("Account not found with IBAN: " + iban));
 
         account.setBalance(account.getBalance().add(amount));
+
+        MoneyTransferredEvent event = new MoneyTransferredEvent(
+                "CASH_DESK", iban, amount, "DEPOSIT", LocalDateTime.now()
+        );
+        transactionEventProducer.sendTransactionEvent(event);
+
         return accountRepository.save(account);
     }
 
@@ -104,5 +114,10 @@ public class AccountManager implements AccountService {
         accountRepository.save(toAccount);
 
         log.info("Transfer of {} completed from {} to {}", request.amount(), request.fromIban(), request.toIban());
+
+        MoneyTransferredEvent event = new MoneyTransferredEvent(
+                request.fromIban(), request.toIban(), request.amount(), "MONEY_TRANSFER", LocalDateTime.now()
+        );
+        transactionEventProducer.sendTransactionEvent(event);
     }
 }

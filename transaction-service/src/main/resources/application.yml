@@ -1,9 +1,9 @@
 server:
-  port: 8083
+  port: 8084
 
 spring:
   application:
-    name: account-service
+    name: transaction-service
 
   datasource:
     url: jdbc:postgresql://localhost:5432/dbs_customer_db
@@ -18,23 +18,18 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.add.type.headers: false
     consumer:
-      group-id: account-group
+      group-id: transaction-group
       auto-offset-reset: earliest
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.value.default.type: com.dbs.account.domain.event.CustomerCreatedEvent
+        spring.json.value.default.type: com.dbs.transaction.domain.event.MoneyTransferredEvent
         spring.json.trusted.packages: "com.dbs.*"
 
 dbs:
   kafka:
     topics:
-      customer-created: dbs.customer.created.v1
+      money-transferred: dbs.money.transferred.v1
