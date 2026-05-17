@@ -48,3 +48,13 @@ dbs:
   kafka:
     topics:
       customer-created: dbs.customer.created.v1
+
+resilience4j:
+  retry:
+    instances:
+      moneyTransferRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - org.springframework.dao.PessimisticLockingFailureException
+          - org.springframework.dao.CannotAcquireLockException

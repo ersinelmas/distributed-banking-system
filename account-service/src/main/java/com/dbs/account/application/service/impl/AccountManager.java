@@ -7,6 +7,7 @@ import com.dbs.account.domain.model.Account;
 import com.dbs.account.domain.model.Currency;
 import com.dbs.account.domain.repository.AccountRepository;
 import com.dbs.account.infrastructure.kafka.producer.TransactionEventProducer;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -85,6 +86,7 @@ public class AccountManager implements AccountService {
     @Override
     @Transactional
     @CacheEvict(value = "customerAccounts", allEntries = true)
+    @Retry(name = "moneyTransferRetry")
     public void transferMoney(MoneyTransferRequest request) {
         if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Transfer amount must be positive");
