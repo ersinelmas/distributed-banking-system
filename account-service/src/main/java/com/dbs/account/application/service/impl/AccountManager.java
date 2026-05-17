@@ -9,6 +9,8 @@ import com.dbs.account.domain.repository.AccountRepository;
 import com.dbs.account.infrastructure.kafka.producer.TransactionEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class AccountManager implements AccountService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "customerAccounts", key = "#customerNumber")
     public Account createDefaultAccount(String customerNumber) {
         log.info("Creating default TRY account for customer: {}", customerNumber);
 
@@ -53,12 +56,14 @@ public class AccountManager implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "customerAccounts", key = "#customerNumber")
     public List<Account> getAccountsByCustomerNumber(String customerNumber) {
         return accountRepository.findAllByCustomerNumber(customerNumber);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "customerAccounts", allEntries = true)
     public Account depositMoney(String iban, BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Deposit amount must be positive");
@@ -79,6 +84,7 @@ public class AccountManager implements AccountService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "customerAccounts", allEntries = true)
     public void transferMoney(MoneyTransferRequest request) {
         if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Transfer amount must be positive");
